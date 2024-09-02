@@ -1,0 +1,10 @@
+hoop1:
+  position:
+    x: 0.0
+    y: 0.0
+    z: 1.0
+  orientation:
+    r: 0
+    p: 45
+    y: 0
+  radius: 1.0
