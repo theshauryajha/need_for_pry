@@ -114,9 +114,11 @@ def load_hoop_from_yaml(file_path):
 
 if __name__ == '__main__':
     '''
-        Load track information from a YAML file
-        Initialize hoops from the YAML data
+        Use param/arg for name of the track (file stored in configs of package)
+        Parse the track YAML file to create hoops / other stuff if added 
+        Record & show time until all hoops cleared
     '''
+    
     yaml_file_path = '/home/shaurya/need_for_pry/src/drone_race/config/track1.yaml'  # Replace with actual path to your YAML file
     hoop_pose, hoop_radius = load_hoop_from_yaml(yaml_file_path)
 
