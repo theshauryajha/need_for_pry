@@ -16,7 +16,6 @@ class Hoop:
         Track the movement of the drone - subsribe to drone position, and implement collision check / cleared
         Reflect status in rviz in real time
     '''
-
     def __init__(self, pose, radius, hoop_id):
         '''
             pose: defines the center position & orientation of the hoop (2D plane)
