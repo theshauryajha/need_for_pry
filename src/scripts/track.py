@@ -23,7 +23,7 @@ class Hoop:
         '''
         self.pose = pose
         self.radius = radius
-        self.cleared = False #not yet cleared
+        self.cleared = False # Not yet cleared
         self.num_points = 100
         self.hoop_id = hoop_id
         self.marker = self.create_marker()
@@ -47,7 +47,7 @@ class Hoop:
             z = self.radius * math.sin(angle)
             point = Point(self.pose.position.x, y + self.pose.position.y, z + self.pose.position.z)
             marker.points.append(point)
-        #make a list of points to make a line strip (math)
+        # Make a list of points to make a line strip (math)
 
         return marker
 
@@ -65,9 +65,7 @@ class Hoop:
         return (-0.2 <= dz < 0.2) and (distance < self.radius)
 
     def transform_to_hoop_frame(self, pos):
-        """
-        Transform a position from the world frame to the hoop's local frame.
-        """
+        # Transform a position from the world frame to the hoop's local frame.
         # Create a transformation matrix from the hoop's pose
         t = transformations.translation_matrix([self.pose.position.x, self.pose.position.y, self.pose.position.z])
         q = [self.pose.orientation.x, self.pose.orientation.y, self.pose.orientation.z, self.pose.orientation.w]
@@ -86,7 +84,7 @@ class HoopManager:
         self.drone_pose_sub = rospy.Subscriber('/drone/pose', Pose, self.drone_callback)
 
     def load_hoops_from_yaml(self, file_path):
-        #YAML file has position of center in x,y,z and orientation roll, pitch, yaw for every hoop
+        # YAML file has position of center in x,y,z and orientation roll, pitch, yaw for every hoop
         with open(file_path, 'r') as file:
             config = yaml.safe_load(file)
 
@@ -134,7 +132,7 @@ if __name__ == '__main__':
         Parse the track YAML file to create hoops / other stuff if added 
         Record & show time until all hoops cleared
     '''
-    yaml_file_path = '/home/shaurya/need_for_pry/src/drone_race/config/track1.yaml' #change YAML file path as needed
+    yaml_file_path = '/home/shaurya/need_for_pry/src/drone_race/config/track1.yaml' # Change YAML file path as needed
     hoop_manager = HoopManager(yaml_file_path)
     hoop_manager.publish_markers()
     rospy.spin()
