@@ -65,31 +65,40 @@ class Hoop:
         # Check if the drone is within the hoop's radius and near the hoop's plane (z ~ 0)
         return (-0.2 <= dz <= 0.2) and (distance < self.radius)
 
-
     def transform_to_hoop_frame(self, pos):
-        # Extract the quaternion from the pose
-        quaternion = [
+        # Extract the rotation matrix from the quaternion
+        rotation = R.from_quat([
             self.pose.orientation.x,
             self.pose.orientation.y,
             self.pose.orientation.z,
             self.pose.orientation.w
-        ]
+        ]).as_dcm()  # Use as_dcm() to get the rotation matrix
+        
+        # Translation vector from the hoop's position
+        translation = np.array([
+            self.pose.position.x,
+            self.pose.position.y,
+            self.pose.position.z
+        ])
 
-        # Convert the quaternion to a 3x3 rotation matrix
-        rotation = R.from_quat(quaternion).as_dcm()  # Use as_dcm() for the rotation matrix
+        # Construct the transformation matrix
+        transformation_matrix = np.eye(4)
+        transformation_matrix[:3, :3] = rotation  # Rotation
+        transformation_matrix[:3, 3] = -translation  # Translation (negative because we are transforming to the hoop's frame)
 
-        # Create the transformation matrix
-        transformation_matrix = np.eye(4)  # Start with an identity matrix
-        transformation_matrix[:3, :3] = rotation  # Set the rotation part
+        # Drone's position in world frame (homogeneous coordinates)
+        drone_world = np.array([
+            pos.x,
+            pos.y,
+            pos.z,
+            1
+        ])
 
-        # Set the translation part (directly from the hoop's position)
-        transformation_matrix[:3, 3] = [self.pose.position.x, self.pose.position.y, self.pose.position.z]
-
-        # Transform the drone's position in the world frame to the hoop frame
-        drone_world = np.array([pos.x, pos.y, pos.z, 1])  # [x, y, z, 1] for homogeneous coordinates
-        drone_hoop = np.dot(np.linalg.inv(transformation_matrix), drone_world)  # Inverse transform
-
-        return drone_hoop[:3]  # Return only the (x, y, z) coordinates
+        # Transform the drone's position to the hoop's frame
+        drone_hoop_homogeneous = np.dot(transformation_matrix, drone_world)
+        
+        # Return only the (x, y, z) coordinates
+        return drone_hoop_homogeneous[:3]
 
 class HoopManager:
     def __init__(self, yaml_file_path):
