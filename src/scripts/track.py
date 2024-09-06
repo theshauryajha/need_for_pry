@@ -8,6 +8,7 @@ from std_msgs.msg import ColorRGBA
 import math
 import numpy as np
 import tf.transformations as transformations
+from scipy.spatial.transform import Rotation as R
 
 class Hoop:
     '''
@@ -55,26 +56,40 @@ class Hoop:
         # Transform the drone position to the hoop's coordinate frame
         drone_pos_hoop = self.transform_to_hoop_frame(drone_pos)
 
-        # Calculate the 3-axis distance between the transformed drone position and the hoop's center
-        dx = drone_pos_hoop.x
-        dy = drone_pos_hoop.y
-        dz = drone_pos_hoop.z
+        # Calculate the 2D distance between the drone and the center of the hoop (x, y plane)
+        dx = drone_pos_hoop[0]
+        dy = drone_pos_hoop[1]
+        dz = drone_pos_hoop[2]
         distance = (dx**2 + dy**2 + dz**2)**0.5
 
-        # Check if the drone is in the plane of the hoop and if the distance is less than the hoop's radius
+        # Check if the drone is within the hoop's radius and near the hoop's plane (z ~ 0)
         return (-0.2 <= dz <= 0.2) and (distance < self.radius)
 
-    def transform_to_hoop_frame(self, pos):
-        # Transform a position from the world frame to the hoop's local frame.
-        # Create a transformation matrix from the hoop's pose
-        t = transformations.translation_matrix([self.pose.position.x, self.pose.position.y, self.pose.position.z])
-        q = [self.pose.orientation.x, self.pose.orientation.y, self.pose.orientation.z, self.pose.orientation.w]
-        r = transformations.quaternion_matrix(q)
-        transform = np.dot(t, r)
 
-        # Apply the transformation to the input position
-        pos_hoop = np.dot(transform, [pos.x, pos.y, pos.z, 1])
-        return Point(pos_hoop[0], pos_hoop[1], pos_hoop[2])
+    def transform_to_hoop_frame(self, pos):
+        # Extract the quaternion from the pose
+        quaternion = [
+            self.pose.orientation.x,
+            self.pose.orientation.y,
+            self.pose.orientation.z,
+            self.pose.orientation.w
+        ]
+
+        # Convert the quaternion to a 3x3 rotation matrix
+        rotation = R.from_quat(quaternion).as_dcm()  # Use as_dcm() for the rotation matrix
+
+        # Create the transformation matrix
+        transformation_matrix = np.eye(4)  # Start with an identity matrix
+        transformation_matrix[:3, :3] = rotation  # Set the rotation part
+
+        # Set the translation part (directly from the hoop's position)
+        transformation_matrix[:3, 3] = [self.pose.position.x, self.pose.position.y, self.pose.position.z]
+
+        # Transform the drone's position in the world frame to the hoop frame
+        drone_world = np.array([pos.x, pos.y, pos.z, 1])  # [x, y, z, 1] for homogeneous coordinates
+        drone_hoop = np.dot(np.linalg.inv(transformation_matrix), drone_world)  # Inverse transform
+
+        return drone_hoop[:3]  # Return only the (x, y, z) coordinates
 
 class HoopManager:
     def __init__(self, yaml_file_path):
