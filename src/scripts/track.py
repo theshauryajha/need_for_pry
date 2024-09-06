@@ -37,33 +37,47 @@ class Hoop:
         marker.id = self.hoop_id
         marker.type = Marker.LINE_STRIP
         marker.action = Marker.ADD
-        marker.pose = self.pose
+        marker.pose = Pose()  # Initialize with identity pose
         marker.scale.x = 0.1
         marker.color = ColorRGBA(1.0, 0.0, 0.0, 0.8)
 
+        # Create points for the vertical hoop
         angle_increment = 2 * math.pi / self.num_points
         for i in range(self.num_points + 1):
             angle = i * angle_increment
             y = self.radius * math.cos(angle)
             z = self.radius * math.sin(angle)
-            point = Point(self.pose.position.x, y + self.pose.position.y, z + self.pose.position.z)
+            
+            # Transform the point to the hoop's pose
+            point = self.transform_point(0, y, z)
             marker.points.append(point)
-        # Make a list of points to make a line strip (math)
 
         return marker
+    
+    def transform_point(self, x, y, z):
+        # Create rotation matrix from quaternion
+        rotation = R.from_quat([
+            self.pose.orientation.x,
+            self.pose.orientation.y,
+            self.pose.orientation.z,
+            self.pose.orientation.w
+        ]).as_dcm()
+
+        # Apply rotation and translation
+        point = np.dot(rotation, np.array([x, y, z])) + np.array([
+            self.pose.position.x,
+            self.pose.position.y,
+            self.pose.position.z
+        ])
+
+        return Point(point[0], point[1], point[2])
 
     def is_collision(self, drone_pos):
         # Transform the drone position to the hoop's coordinate frame
         drone_pos_hoop = self.transform_to_hoop_frame(drone_pos)
 
-        # Calculate the 2D distance between the drone and the center of the hoop (x, y plane)
-        dx = drone_pos_hoop[0]
-        dy = drone_pos_hoop[1]
-        dz = drone_pos_hoop[2]
-        distance = (dx**2 + dy**2 + dz**2)**0.5
-
-        # Check if the drone is within the hoop's radius and near the hoop's plane (z ~ 0)
-        return (-0.2 <= dz <= 0.2) and (distance < self.radius)
+        # Check if the drone is within the hoop's radius and near the hoop's plane (x ~ 0)
+        return (-0.2 <= drone_pos_hoop[0] <= 0.2) and (drone_pos_hoop[1]**2 + drone_pos_hoop[2]**2 < self.radius**2)
 
     def transform_to_hoop_frame(self, pos):
         # Extract the rotation matrix from the quaternion
@@ -72,7 +86,7 @@ class Hoop:
             self.pose.orientation.y,
             self.pose.orientation.z,
             self.pose.orientation.w
-        ]).as_dcm()  # Use as_dcm() to get the rotation matrix
+        ]).as_dcm()
         
         # Translation vector from the hoop's position
         translation = np.array([
@@ -83,16 +97,11 @@ class Hoop:
 
         # Construct the transformation matrix
         transformation_matrix = np.eye(4)
-        transformation_matrix[:3, :3] = rotation  # Rotation
-        transformation_matrix[:3, 3] = -translation  # Translation (negative because we are transforming to the hoop's frame)
+        transformation_matrix[:3, :3] = rotation.T  # Transpose for inverse rotation
+        transformation_matrix[:3, 3] = -np.dot(rotation.T, translation)  # Inverse translation
 
         # Drone's position in world frame (homogeneous coordinates)
-        drone_world = np.array([
-            pos.x,
-            pos.y,
-            pos.z,
-            1
-        ])
+        drone_world = np.array([pos.x, pos.y, pos.z, 1])
 
         # Transform the drone's position to the hoop's frame
         drone_hoop_homogeneous = np.dot(transformation_matrix, drone_world)
@@ -145,6 +154,8 @@ class HoopManager:
 
     def drone_callback(self, msg):
         drone_pos = msg.position
+        rospy.loginfo("Drone Position")
+        rospy.loginfo(f"x: {drone_pos.x} y: {drone_pos.y}, z: {drone_pos.z}")
         for hoop in self.hoops:
             if not hoop.cleared and hoop.is_collision(drone_pos):
                 hoop.cleared = True

@@ -2,27 +2,27 @@ hoops:
   - position:
       x: 0.0
       y: 0.0
-      z: 1.0
+      z: 2.0
     orientation:
       r: 0
       p: 0
       y: 0
     radius: 1.0
   - position:
-      x: 2.0
+      x: 3.0
       y: 0.0
-      z: 1.0
+      z: 2.0
     orientation:
       r: 0
       p: 0
       y: 0
-    radius: 1.0
+    radius: 0.8
   - position:
-      x: -2.0
+      x: -3.0
       y: 0.0
-      z: 1.0
+      z: 2.0
     orientation:
       r: 0
       p: 0
       y: 0
-    radius: 1.0
+    radius: 1.2
