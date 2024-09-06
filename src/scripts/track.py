@@ -59,10 +59,10 @@ class Hoop:
         dx = drone_pos_hoop.x
         dy = drone_pos_hoop.y
         dz = drone_pos_hoop.z
-        distance = (dx**2 + dy**2)**0.5
+        distance = (dx**2 + dy**2 + dz**2)**0.5
 
         # Check if the drone is in the plane of the hoop and if the distance is less than the hoop's radius
-        return (-0.2 <= dz < 0.2) and (distance < self.radius)
+        return (-0.2 <= dz <= 0.2) and (distance < self.radius)
 
     def transform_to_hoop_frame(self, pos):
         # Transform a position from the world frame to the hoop's local frame.
