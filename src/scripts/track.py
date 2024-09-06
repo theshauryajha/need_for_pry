@@ -154,8 +154,6 @@ class HoopManager:
 
     def drone_callback(self, msg):
         drone_pos = msg.position
-        rospy.loginfo("Drone Position")
-        rospy.loginfo(f"x: {drone_pos.x} y: {drone_pos.y}, z: {drone_pos.z}")
         for hoop in self.hoops:
             if not hoop.cleared and hoop.is_collision(drone_pos):
                 hoop.cleared = True
