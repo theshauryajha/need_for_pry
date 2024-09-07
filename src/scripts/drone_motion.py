@@ -25,7 +25,7 @@ class DroneMotion:
         # Load URDF
         rospack = rospkg.RosPack()
         package_path = rospack.get_path('drone_race')
-        urdf_path = os.path.join(package_path, 'urdf', 'drone.urdf')
+        urdf_path = os.path.join(package_path, 'urdf', 'quadrotor.urdf')
         with open(urdf_path, 'r') as file:
             robot_description = file.read()
         
@@ -57,11 +57,9 @@ class DroneMotion:
         pose_msg.orientation.w = self.orientation[3]
         self.pose_pub.publish(pose_msg)
 
-        # Publish Joint States
+        # Publish Joint States (empty for this URDF as it doesn't have movable joints)
         joint_msg = JointState()
         joint_msg.header.stamp = rospy.Time.now()
-        joint_msg.name = ['base_to_FL', 'base_to_FR', 'base_to_BL', 'base_to_BR']
-        joint_msg.position = [0, 0, 0, 0]
         self.joint_pub.publish(joint_msg)
 
         # Publish TF
