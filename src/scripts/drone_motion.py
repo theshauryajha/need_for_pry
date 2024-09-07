@@ -2,15 +2,18 @@
 
 import rospy
 from geometry_msgs.msg import Twist, Pose, TransformStamped
+from sensor_msgs.msg import JointState
+from tf.transformations import quaternion_from_euler
 import tf2_ros
-import tf_conversions
+import rospkg
+import os
 
 class DroneMotion:
     def __init__(self):
         rospy.init_node('drone_motion_node')
         
         self.pose_pub = rospy.Publisher('/drone/pose', Pose, queue_size=10)
-        self.tf_broadcaster = tf2_ros.TransformBroadcaster()
+        self.joint_pub = rospy.Publisher('/joint_states', JointState, queue_size=10)
         
         self.velocity_sub = rospy.Subscriber('/cmd_vel', Twist, self.velocity_callback)
         
@@ -19,18 +22,30 @@ class DroneMotion:
         
         self.rate = rospy.Rate(10)  # 10 Hz
 
+        # Load URDF
+        rospack = rospkg.RosPack()
+        package_path = rospack.get_path('drone_race')
+        urdf_path = os.path.join(package_path, 'urdf', 'drone.urdf')
+        with open(urdf_path, 'r') as file:
+            robot_description = file.read()
+        
+        rospy.set_param('robot_description', robot_description)
+        
+        # Initialize tf2 broadcaster
+        self.tf_broadcaster = tf2_ros.TransformBroadcaster()
+
     def velocity_callback(self, msg):
         # Update position based on linear velocity
-        self.position[0] += msg.linear.x * 0.001  # Assuming 0.001 seconds between updates
-        self.position[1] += msg.linear.y * 0.001
-        self.position[2] += msg.linear.z * 0.001
+        self.position[0] += msg.linear.x * 0.1  # Assuming 0.1 seconds between updates
+        self.position[1] += msg.linear.y * 0.1
+        self.position[2] += msg.linear.z * 0.1
         
         # Update orientation based on angular velocity (simplified)
-        yaw = msg.angular.z * 0.001
-        q = tf_conversions.transformations.quaternion_from_euler(0, 0, yaw)
+        yaw = msg.angular.z * 0.1
+        q = quaternion_from_euler(0, 0, yaw)
         self.orientation = [q[0], q[1], q[2], q[3]]
 
-    def publish_pose_and_tf(self):
+    def publish_pose_and_joint_states(self):
         # Publish Pose
         pose_msg = Pose()
         pose_msg.position.x = self.position[0]
@@ -41,6 +56,13 @@ class DroneMotion:
         pose_msg.orientation.z = self.orientation[2]
         pose_msg.orientation.w = self.orientation[3]
         self.pose_pub.publish(pose_msg)
+
+        # Publish Joint States
+        joint_msg = JointState()
+        joint_msg.header.stamp = rospy.Time.now()
+        joint_msg.name = ['base_to_FL', 'base_to_FR', 'base_to_BL', 'base_to_BR']
+        joint_msg.position = [0, 0, 0, 0]
+        self.joint_pub.publish(joint_msg)
 
         # Publish TF
         t = TransformStamped()
@@ -58,7 +80,7 @@ class DroneMotion:
 
     def run(self):
         while not rospy.is_shutdown():
-            self.publish_pose_and_tf()
+            self.publish_pose_and_joint_states()
             self.rate.sleep()
 
 if __name__ == '__main__':
