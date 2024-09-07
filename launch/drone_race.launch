@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<launch>
+  <!-- Load the robot description parameter -->
+  <param name="robot_description" textfile="$(find drone_race)/urdf/quadrotor.urdf" />
+
+  <!-- Start the drone motion node -->
+  <node name="drone_motion_node" pkg="drone_race" type="drone_motion.py" output="screen" />
+
+  <!-- Start the hoop manager node -->
+  <node name="hoop_manager_node" pkg="drone_race" type="track.py" output="screen">
+    <param name="track_config" value="$(find drone_race)/config/track1.yaml" />
+  </node>
+
+  <!-- Start the teleop twist keyboard node for manual control -->
+  <node name="teleop_twist_keyboard" pkg="teleop_twist_keyboard" type="teleop_twist_keyboard.py" output="screen">
+    <remap from="cmd_vel" to="/cmd_vel" />
+  </node>
+
+  <!-- Start the robot state publisher -->
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
+
+  <!-- Start the joint state publisher -->
+  <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
+</launch>
