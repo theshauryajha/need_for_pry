@@ -63,7 +63,7 @@ class Hoop:
             self.pose.orientation.y,
             self.pose.orientation.z,
             self.pose.orientation.w
-        ]).as_dcm()
+        ]).as_matrix()
 
         # Apply rotation and translation
         point = np.dot(rotation, np.array([x, y, z])) + np.array([
@@ -88,7 +88,7 @@ class Hoop:
             self.pose.orientation.y,
             self.pose.orientation.z,
             self.pose.orientation.w
-        ]).as_dcm()
+        ]).as_matrix()
         
         # Translation vector from the hoop's position
         translation = np.array([
@@ -169,7 +169,7 @@ if __name__ == '__main__':
         Record & show time until all hoops cleared
     '''
 
-    rospack = rospkg.Rospack()
+    rospack = rospkg.RosPack()
     package_path = rospack.get_path('drone_race')
     
     track = 'config/track1.yaml'
