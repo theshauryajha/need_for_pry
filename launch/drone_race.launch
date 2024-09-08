@@ -1,5 +1,9 @@
 <?xml version="1.0"?>
 <launch>
+
+  <arg name="track" default="track1" />
+  <arg name="use_joy"/>
+
   <!-- Load the robot description parameter -->
   <param name="robot_description" command="$(find xacro)/xacro '$(find hector_quadrotor_description)/urdf/quadrotor.urdf.xacro'" />
 
@@ -11,7 +15,7 @@
 
   <!-- Start the hoop manager node -->
   <node name="hoop_manager_node" pkg="drone_race" type="track.py" output="screen">
-    <param name="track_config" value="$(find drone_race)/config/track1.yaml" />
+    <param name="track_config" value="$(find drone_race)/config/$(arg track).yaml" />
   </node>
 
   <!-- Start the robot state publisher -->
@@ -20,12 +24,13 @@
   <!-- Start the joint state publisher -->
   <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
 
-  <!-- Start the Joy node -->
-  <node name="joy_node" pkg="joy" type="joy_node" output="screen">
-    <param name="dev" value="/dev/input/js0" />
-    <param name="deadzone" value="0.3" />
-  </node>
+  <!-- Conditional start of the Joy node or Teleop Twist Keyboard node based on controller_name argument -->
+  <group if="$(arg use_joy)">
+    <node name="joy_node" pkg="joy" type="joy_node" output="screen">
+      <param name="dev" value="/dev/input/js0" />
+      <param name="deadzone" value="0.3" />
+    </node>
+    <node name="joy_to_twist" pkg="drone_race" type="joy_to_twist.py" output="screen" />
+  </group>
 
-  <!-- Start the Joy to Twist converter node -->
-  <node name="joy_to_twist" pkg="drone_race" type="joy_to_twist.py" output="screen" />
 </launch>
