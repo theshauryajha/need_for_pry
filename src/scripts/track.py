@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
 import rospy
+import rospkg
+import os
 import yaml
 from geometry_msgs.msg import Point, Pose
 from visualization_msgs.msg import Marker
@@ -166,7 +168,13 @@ if __name__ == '__main__':
         Parse the track YAML file to create hoops / other stuff if added 
         Record & show time until all hoops cleared
     '''
-    yaml_file_path = '/home/shaurya/need_for_pry/src/drone_race/config/track1.yaml' # Change YAML file path as needed
+
+    rospack = rospkg.Rospack()
+    package_path = rospack.get_path('drone_race')
+    
+    track = 'config/track1.yaml'
+    yaml_file_path = os.path.join(package_path, track)
+
     hoop_manager = HoopManager(yaml_file_path)
     hoop_manager.publish_markers()
     rospy.spin()
