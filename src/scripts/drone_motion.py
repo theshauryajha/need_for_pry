@@ -16,23 +16,43 @@ class DroneMotion:
         self.joint_pub = rospy.Publisher('/joint_states', JointState, queue_size=10)
         
         self.velocity_sub = rospy.Subscriber('/cmd_vel', Twist, self.velocity_callback)
-        
-        self.position = [0, 0, 0]  # [x, y, z]
+
+        self.gravity = -9.81
+        self.position = [-5, 0, 1]  # [x, y, z]
         self.orientation = [0, 0, 0, 1]  # [x, y, z, w] (quaternion)
+        self.velocity = [0, 0, 0] # [x, y, z]
         
-        self.rate = rospy.Rate(10)  # 10 Hz
+        self.rate = rospy.Rate(50)  # 50 Hz
         
         # Initialize tf2 broadcaster
         self.tf_broadcaster = tf2_ros.TransformBroadcaster()
 
+        self.timer = rospy.Timer(rospy.Duration(1.0/50), self.update_callback)
+
+    def update_callback(self, event):
+        dt = 1.0 / 50
+
+        # Apply gravity to z-velocity
+        self.velocity[2] += self.gravity * dt
+
+        # Update position based on current velocity
+        self.position[0] += self.velocity[0] * dt
+        self.position[1] += self.velocity[1] * dt
+        self.position[2] += self.velocity[2] * dt
+
+        # Stop at ground level
+        if self.position[2] < 0:
+            self.position[2] = 0
+            self.velocity[2] = 0
+
     def velocity_callback(self, msg):
-        # Update position based on linear velocity
-        self.position[0] += msg.linear.x * 0.1  # Assuming 0.1 seconds between updates
-        self.position[1] += msg.linear.y * 0.1
-        self.position[2] += msg.linear.z * 0.1
+        # Update velocity based on received Twist message
+        self.velocity[0] = msg.linear.x
+        self.velocity[1] = msg.linear.y
+        self.velocity[2] += msg.linear.z  # Add to existing z velocity (affected by gravity)
         
         # Update orientation based on angular velocity (simplified)
-        yaw = msg.angular.z * 0.1
+        yaw = msg.angular.z * (1.0 / 50)  # Assuming 50 Hz update rate
         q = quaternion_from_euler(0, 0, yaw)
         self.orientation = [q[0], q[1], q[2], q[3]]
 
