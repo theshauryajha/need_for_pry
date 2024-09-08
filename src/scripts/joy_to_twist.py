@@ -20,14 +20,14 @@ class JoyToDrone:
         self.axis_l2 = rospy.get_param('~axis_l2', 2)  # L2 trigger
         
         # Sensitivity parameters
-        self.scale_linear_xy = rospy.get_param('~scale_linear_xy', 1.0)
-        self.scale_linear_z = rospy.get_param('~scale_linear_z', 1.0)
+        self.scale_linear_xy = rospy.get_param('~scale_linear_xy', 1.25)
+        self.scale_linear_z = rospy.get_param('~scale_linear_z', 0.25)
         
         # Exponential factor for fine control
         self.expo_factor = rospy.get_param('~expo_factor', 0.5)
 
         # Deadzone
-        self.deadzone = rospy.get_param('~deadzone', 0.1)
+        self.deadzone = rospy.get_param('~deadzone', 0.5)
 
     def apply_expo(self, value, expo):
         return value * (abs(value) ** expo)
