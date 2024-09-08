@@ -171,7 +171,7 @@ if __name__ == '__main__':
     rospack = rospkg.RosPack()
     package_path = rospack.get_path('drone_race')
     
-    track = 'config/track1.yaml'
+    track = 'config/track.yaml'
     yaml_file_path = os.path.join(package_path, track)
 
     hoop_manager = HoopManager(yaml_file_path)

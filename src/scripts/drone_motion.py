@@ -17,7 +17,7 @@ class DroneMotion:
         
         self.velocity_sub = rospy.Subscriber('/cmd_vel', Twist, self.velocity_callback)
 
-        self.gravity = -9.81
+        self.gravity = -2.0
         self.position = [-5, 0, 1]  # [x, y, z]
         self.orientation = [0, 0, 0, 1]  # [x, y, z, w] (quaternion)
         self.velocity = [0, 0, 0] # [x, y, z]
