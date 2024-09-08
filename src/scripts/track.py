@@ -63,7 +63,7 @@ class Hoop:
             self.pose.orientation.y,
             self.pose.orientation.z,
             self.pose.orientation.w
-        ]).as_matrix()
+        ]).as_dcm()
 
         # Apply rotation and translation
         point = np.dot(rotation, np.array([x, y, z])) + np.array([
@@ -88,7 +88,7 @@ class Hoop:
             self.pose.orientation.y,
             self.pose.orientation.z,
             self.pose.orientation.w
-        ]).as_matrix()
+        ]).as_dcm()
         
         # Translation vector from the hoop's position
         translation = np.array([

@@ -21,15 +21,6 @@ class DroneMotion:
         self.orientation = [0, 0, 0, 1]  # [x, y, z, w] (quaternion)
         
         self.rate = rospy.Rate(10)  # 10 Hz
-
-        # Load URDF
-        rospack = rospkg.RosPack()
-        package_path = rospack.get_path('drone_race')
-        urdf_path = os.path.join(package_path, 'urdf', 'quadrotor.urdf')
-        with open(urdf_path, 'r') as file:
-            robot_description = file.read()
-        
-        rospy.set_param('robot_description', robot_description)
         
         # Initialize tf2 broadcaster
         self.tf_broadcaster = tf2_ros.TransformBroadcaster()
@@ -66,7 +57,7 @@ class DroneMotion:
         t = TransformStamped()
         t.header.stamp = rospy.Time.now()
         t.header.frame_id = "world"
-        t.child_frame_id = "drone"
+        t.child_frame_id = "base_link"
         t.transform.translation.x = self.position[0]
         t.transform.translation.y = self.position[1]
         t.transform.translation.z = self.position[2]

@@ -1,7 +1,8 @@
 <?xml version="1.0"?>
 <launch>
   <!-- Load the robot description parameter -->
-  <param name="robot_description" textfile="$(find drone_race)/urdf/quadrotor.urdf" />
+  <param name="robot_description" command="$(find xacro)/xacro '$(find hector_quadrotor_description)/urdf/quadrotor.urdf.xacro'" />
+  <!--param name="robot_description" textfile="$(find drone_race)/urdf/quadrotor.urdf" /-->
 
   <!-- Start the visualization in rviz -->
   <node name="rviz" pkg="rviz" type="rviz" args="-d $(find drone_race)/config/view_conf.rviz"/>
