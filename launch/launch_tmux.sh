@@ -13,11 +13,11 @@ tmux split-window -h -t drone_race:0
 
 sleep 2
 
-# Create and configure the second window for keyboard_teleop
-tmux new-window -t drone_race:1 -n 'keyboard_teleop'
-tmux send-keys -t drone_race:1 'rosrun teleop_twist_keyboard teleop_twist_keyboard.py' C-m
+# Create and configure the second window for joy_to_twist status
+tmux new-window -t drone_race:1 -n 'joy_status'
+tmux send-keys -t drone_race:1 'rostopic echo /cmd_vel' C-m
 
-# Select the 'keyboard_teleop' window to make it active
+# Select the 'joy_status' window to make it active
 tmux select-window -t drone_race:1
 
 # Attach to the tmux session
