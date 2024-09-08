@@ -3,6 +3,9 @@
   <!-- Load the robot description parameter -->
   <param name="robot_description" textfile="$(find drone_race)/urdf/quadrotor.urdf" />
 
+  <!-- Start the visualization in rviz -->
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find drone_race)/config/view_conf.rviz"/>
+
   <!-- Start the drone motion node -->
   <node name="drone_motion_node" pkg="drone_race" type="drone_motion.py" output="screen" />
 
