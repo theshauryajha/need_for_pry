@@ -11,11 +11,6 @@
     <param name="track_config" value="$(find drone_race)/config/track1.yaml" />
   </node>
 
-  <!-- Start the teleop twist keyboard node for manual control -->
-  <node name="teleop_twist_keyboard" pkg="teleop_twist_keyboard" type="teleop_twist_keyboard.py" output="screen">
-    <remap from="cmd_vel" to="/cmd_vel" />
-  </node>
-
   <!-- Start the robot state publisher -->
   <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
 
