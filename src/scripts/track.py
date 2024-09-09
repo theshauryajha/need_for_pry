@@ -162,10 +162,9 @@ class HoopManager:
             for hoop in self.hoops:
                 if hoop.cleared:
                     hoop.marker.color = ColorRGBA(0.0, 1.0, 0.0, 0.8)  # Green
-                
-                if not hoop.clear_counted:
-                    nCleared += 1
-                    hoop.clear_counted = True
+                    if hoop.clear_counted == False:
+                        nCleared += 1
+                        hoop.clear_counted = True
                     
                 self.marker_publisher.publish(hoop.marker)
             self.hoops_cleared_publisher.publish(int(nCleared))

@@ -79,8 +79,6 @@ class DisplayImage:
         if player_name not in self.leaderboard_data or lap_time < self.leaderboard_data[player_name]:
             self.leaderboard_data[player_name] = lap_time
             self.update_top_times()
-
-        self.save_leaderboards()
     
     def render_display(self, items, image_width=1280, image_height=720):
         image = np.zeros((image_height, image_width, 3), dtype=np.uint8)
@@ -194,7 +192,9 @@ class DisplayImage:
                         else:
                             items.append((f"{player} || {time:.3f}s", {'color': (200, 200, 200)}))
                     
-                    rospy.sleep(5)
+                    self.save_leaderboards()
+                    rospy.loginfo("Game Over")
+                    rospy.sleep(3)
                     raise rospy.ROSInterruptException("Game Over")
             else:
                 self.nHoops = rospy.get_param('num_hoops', None)
