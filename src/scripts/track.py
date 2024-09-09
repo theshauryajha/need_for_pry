@@ -11,6 +11,7 @@ import math
 import numpy as np
 import tf.transformations as transformations
 from scipy.spatial.transform import Rotation as R
+from std_msgs.msg import Int32
 
 class Hoop:
     '''
@@ -63,7 +64,7 @@ class Hoop:
             self.pose.orientation.y,
             self.pose.orientation.z,
             self.pose.orientation.w
-        ]).as_dcm()
+        ]).as_matrix()
 
         # Apply rotation and translation
         point = np.dot(rotation, np.array([x, y, z])) + np.array([
@@ -88,7 +89,7 @@ class Hoop:
             self.pose.orientation.y,
             self.pose.orientation.z,
             self.pose.orientation.w
-        ]).as_dcm()
+        ]).as_matrix()
         
         # Translation vector from the hoop's position
         translation = np.array([
@@ -122,6 +123,7 @@ class HoopManager:
 
         self.hoops = self.load_hoops_from_yaml(yaml_file_path)
         self.marker_publisher = rospy.Publisher('visualization_marker', Marker, queue_size=10)
+        self.hoops_cleared_publisher = rospy.Publisher('num_hoops_cleared', Int32, queue_size=10)
         self.drone_pose_sub = rospy.Subscriber('/drone/pose', Pose, self.drone_callback)
 
     def load_hoops_from_yaml(self, file_path):
@@ -149,15 +151,19 @@ class HoopManager:
             radius = hoop_config['radius']
             hoops.append(Hoop(pose, radius, i))
 
+        rospy.set_param('num_hoops', len(hoops))
         return hoops
 
     def publish_markers(self):
         rate = rospy.Rate(1)  # 1 Hz
+        nCleared = 0
         while not rospy.is_shutdown():
             for hoop in self.hoops:
                 if hoop.cleared:
                     hoop.marker.color = ColorRGBA(0.0, 1.0, 0.0, 0.8)  # Green
+                    nCleared += 1
                 self.marker_publisher.publish(hoop.marker)
+            self.hoops_cleared_publisher.publish(int(nCleared))
             rate.sleep()
 
     def drone_callback(self, msg):

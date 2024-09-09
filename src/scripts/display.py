@@ -8,6 +8,7 @@ import cv2
 import numpy as np
 from datetime import datetime
 import yaml
+from std_msgs.msg import Int32
 
 class DisplayImage:
     def __init__(self):
@@ -23,6 +24,13 @@ class DisplayImage:
         self.load_leaderboard(yaml_file_path)
         self.start_time = rospy.Time.now()
         self.lap_start_time = None
+
+        self.nHoops = rospy.get_param('num_hoops', None)
+        self.nCleared = 0
+        self.hoops_cleared_sub = rospy.Subscriber('num_hoops_cleared', Int32, self.hoop_ctr_callback)
+        
+    def hoop_ctr_callback(self, msg):
+        self.nCleared = msg.data
 
     def load_leaderboard(self, filename):
         with open(filename, 'r') as file:
@@ -111,6 +119,10 @@ class DisplayImage:
                 self.lap_start_time = rospy.Time.now()
             lap_time = (now - self.lap_start_time).to_sec()
             items.append((f"Lap Time: {lap_time:.3f}", {'color': (0, 255, 0)}))
+            
+            if self.nHoops is None:
+                self.nHoops = rospy.get_param('num_hoops', None)
+            items.append((f"Hoops Cleared: {self.nCleared}/{self.nHoops}", {'color': (0, 255, 0)}))
 
         return self.render_display(items)
 
