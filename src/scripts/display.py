@@ -28,16 +28,16 @@ class DisplayImage:
         self.start_time = datetime.now()
         self.messages = [
             (0, 1.5, "Welcome to the drone race game!"),
-            (1.5, 2.5, "Can you find your position on the leaderboard? ---->"),
+            (1.5, 2.5, "Find your position on the leaderboard!"),
             (2.5, 3, "Let's fly!"),
-            (3, 4, "5....."),
-            (4, 5, "4..."),
-            (5, 6, "3..."),
-            (6, 7, "2..."),
-            (7, 8, "1..."),
-            (8, 9, "GO!!!")
+            (3, 4, "5"),
+            (4, 5, "4"),
+            (5, 6, "3"),
+            (6, 7, "2"),
+            (7, 8, "1"),
+            (8, 9, "!! GO !!")
         ]
-        self.countdown_start_time = None
+        self.lap_start_time = None
     
     def load_leaderboard(self, filename):
         with open(filename, 'r') as file:
@@ -64,6 +64,7 @@ class DisplayImage:
         
         now = datetime.now()
         elapsed_time = (now - self.start_time).total_seconds()
+        rospy.loginfo(f"Elapsed time: {elapsed_time}")
         
         # Determine which message to display
         for start, end, message in self.messages:
@@ -75,11 +76,10 @@ class DisplayImage:
             self.draw_leaderboard(image)
         
         if elapsed_time >= 9:
-            if self.countdown_start_time is None:
-                self.countdown_start_time = now
-            countdown_elapsed = (now - self.countdown_start_time).total_seconds()
-            countdown_time = max(0, 10 - int(countdown_elapsed))
-            self.draw_text(image, f"Time: {countdown_time}", (image_width // 2, image_height // 2 + 150), 2, 3, (0, 255, 0))
+            if self.lap_start_time is None:
+                self.lap_start_time = rospy.Time.now()
+            elapsed = (rospy.Time.now() - self.lap_start_time).to_sec()
+            self.draw_text(image, f"Lap Time: {elapsed:.3f}", (image_width // 2, image_height // 2 + 150), 2, 3, (0, 255, 0))
         
         return image
     
