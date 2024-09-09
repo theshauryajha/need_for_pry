@@ -33,4 +33,6 @@
     <node name="joy_to_twist" pkg="drone_race" type="joy_to_twist.py" output="screen" />
   </group>
 
+  <node name="display_node" pkg="drone_race" type="display.py" />
+
 </launch>
