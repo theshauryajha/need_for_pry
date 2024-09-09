@@ -117,8 +117,8 @@ class HoopManager:
 
         rospack = rospkg.RosPack()
         package_path = rospack.get_path('drone_race')
-        track = rospy.get_param('~track_config')
-        yaml_file_path = os.path.join(package_path, 'config', track)
+        track = rospy.get_param('track_config')
+        yaml_file_path = os.path.join(package_path, 'config', track, 'track.yaml')
 
         self.hoops = self.load_hoops_from_yaml(yaml_file_path)
         self.marker_publisher = rospy.Publisher('visualization_marker', Marker, queue_size=10)
