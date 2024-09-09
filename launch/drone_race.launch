@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <launch>
 
-  <arg name="track" default="track1" />
+  <arg name="track" default="track" />
   <arg name="use_joy"/>
 
   <!-- Load the robot description parameter -->

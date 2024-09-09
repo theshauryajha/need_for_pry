@@ -112,8 +112,14 @@ class Hoop:
         return drone_hoop_homogeneous[:3]
 
 class HoopManager:
-    def __init__(self, yaml_file_path):
+    def __init__(self):
         rospy.init_node("hoop_manager_node")
+
+        rospack = rospkg.RosPack()
+        package_path = rospack.get_path('drone_race')
+        track = rospy.get_param('~track_config')
+        yaml_file_path = os.path.join(package_path, 'config', track)
+
         self.hoops = self.load_hoops_from_yaml(yaml_file_path)
         self.marker_publisher = rospy.Publisher('visualization_marker', Marker, queue_size=10)
         self.drone_pose_sub = rospy.Subscriber('/drone/pose', Pose, self.drone_callback)
@@ -168,12 +174,6 @@ if __name__ == '__main__':
         Record & show time until all hoops cleared
     '''
 
-    rospack = rospkg.RosPack()
-    package_path = rospack.get_path('drone_race')
-    
-    track = 'config/track.yaml'
-    yaml_file_path = os.path.join(package_path, track)
-
-    hoop_manager = HoopManager(yaml_file_path)
+    hoop_manager = HoopManager()
     hoop_manager.publish_markers()
     rospy.spin()
