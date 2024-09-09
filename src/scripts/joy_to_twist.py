@@ -21,7 +21,7 @@ class JoyToDrone:
         
         # Sensitivity parameters
         self.scale_linear_xy = rospy.get_param('~scale_linear_xy', 10.0)
-        self.scale_linear_z = rospy.get_param('~scale_linear_z', 0.1)
+        self.scale_linear_z = rospy.get_param('~scale_linear_z', 0.08)
         self.scale_angular_z = rospy.get_param('~scale_angular_z', 3.0)
         
         # Exponential factor for fine control

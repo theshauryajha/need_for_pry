@@ -68,9 +68,6 @@ Visualization Manager:
         hoop_4: true
         hoop_5: true
         hoop_6: true
-        hoop_7: true
-        hoop_8: true
-        hoop_9: true
       Queue Size: 100
       Value: true
     - Alpha: 1
