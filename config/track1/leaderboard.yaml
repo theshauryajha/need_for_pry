@@ -1,0 +1,10 @@
+# leaderboard.yaml
+# This file contains the leaderboard data for the drone race game.
+# Format: 
+# player_name: score
+
+Player1: 120
+Player2: 150
+Player3: 180
+Player4: 210
+Player5: 240

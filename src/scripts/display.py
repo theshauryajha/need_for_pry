@@ -1,43 +1,103 @@
 #!/usr/bin/env python3
 import rospy
-from visualization_msgs.msg import Marker
-from geometry_msgs.msg import Point
+import rospkg
+import os
+from sensor_msgs.msg import Image
+from cv_bridge import CvBridge
+import cv2
+import numpy as np
+from datetime import datetime, timedelta
+import yaml
 
-class Display:
+class DisplayImage:
     def __init__(self):
         # Initialize the ROS publisher
-        self.publisher = rospy.Publisher('/text_marker', Marker, queue_size=10)
-        
-        # Create a Marker message
-        self.marker = Marker()
-        self.marker.header.frame_id = "base_link"  # Change this to your frame_id if needed
-        self.marker.header.stamp = rospy.Time.now()
-        self.marker.ns = "text_marker"
-        self.marker.id = 0
-        self.marker.type = Marker.TEXT_VIEW_FACING
-        self.marker.action = Marker.ADD
+        self.publisher = rospy.Publisher('/camera/image', Image, queue_size=10)
+        self.bridge = CvBridge()
+        self.rate = rospy.Rate(30)  # Publishing rate at 30 Hz
 
-        # Set the position where you want the text to appear
-        self.marker.pose.position = Point(0, 0, 1) 
-        self.marker.pose.orientation.w = 1.0
-        self.marker.scale.z = 1.0  # Size of the text
-        self.marker.color.a = 1.0  # Alpha channel (transparency)
-        self.marker.color.r = 1.0  # Red
-        self.marker.color.g = 1.0  # Green
-        self.marker.color.b = 1.0  # Blue
-        
+        # Load leaderboard for track
+        rospack = rospkg.RosPack()
+        package_path = rospack.get_path('drone_race')
+        track = rospy.get_param('track_config')
+        yaml_file_path = os.path.join(package_path, 'config', track, 'leaderboard.yaml')
 
-    def write(self):
-        # Update & publish the marker
-        self.marker.header.stamp = rospy.Time.now()
-        self.marker.text = "Hello " +  str(self.marker.header.stamp.to_sec())
-        self.publisher.publish(self.marker)
+        self.load_leaderboard(yaml_file_path)
+
+        # Initialize times
+        self.start_time = datetime.now()
+        self.messages = [
+            (0, 1.5, "Welcome to the drone race game!"),
+            (1.5, 2.5, "Can you find your position on the leaderboard? ---->"),
+            (2.5, 3, "Let's fly!"),
+            (3, 4, "5....."),
+            (4, 5, "4..."),
+            (5, 6, "3..."),
+            (6, 7, "2..."),
+            (7, 8, "1..."),
+            (8, 9, "GO!!!")
+        ]
+        self.countdown_start_time = None
+    
+    def load_leaderboard(self, filename):
+        with open(filename, 'r') as file:
+            self.leaderboard = yaml.safe_load(file) or {}
+
+    def draw_text(self, image, text, position, font_scale, thickness, color):
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        (text_width, text_height), baseline = cv2.getTextSize(text, font, font_scale, thickness)
+        x = position[0] - text_width // 2
+        y = position[1] + text_height // 2
+        cv2.putText(image, text, (x, y), font, font_scale, color, thickness, cv2.LINE_AA)
+
+    def draw_leaderboard(self, image):
+        y0, dy = 100, 30
+        x0 = image.shape[1] - 300
+        self.draw_text(image, "Leaderboard", (x0 + 150, y0 - 40), 1.5, 2, (255, 255, 255))
+        for idx, (player, time) in enumerate(self.leaderboard.items()):
+            self.draw_text(image, f"{player} || {time}", (x0 + 150, y0 + idx * dy), 1, 2, (255, 255, 255))
+
+    def create_image(self):
+        image_width = 1280
+        image_height = 720
+        image = np.zeros((image_height, image_width, 3), dtype=np.uint8)
+        
+        now = datetime.now()
+        elapsed_time = (now - self.start_time).total_seconds()
+        
+        # Determine which message to display
+        for start, end, message in self.messages:
+            if start <= elapsed_time < end:
+                self.draw_text(image, message, (image_width // 2, image_height // 2), 1.5, 2, (255, 255, 255))
+                break
+        
+        if elapsed_time >= 2.5:
+            self.draw_leaderboard(image)
+        
+        if elapsed_time >= 9:
+            if self.countdown_start_time is None:
+                self.countdown_start_time = now
+            countdown_elapsed = (now - self.countdown_start_time).total_seconds()
+            countdown_time = max(0, 10 - int(countdown_elapsed))
+            self.draw_text(image, f"Time: {countdown_time}", (image_width // 2, image_height // 2 + 150), 2, 3, (0, 255, 0))
+        
+        return image
+    
+    def publish_image(self):
+        while not rospy.is_shutdown():
+            # Create an image with the current timestamp
+            image = self.create_image()
+            
+            # Convert the image to a ROS message
+            ros_image = self.bridge.cv2_to_imgmsg(image, encoding="bgr8")
+            
+            # Publish the image
+            self.publisher.publish(ros_image)
+            
+            # Sleep to maintain the rate
+            self.rate.sleep()
 
 if __name__ == '__main__':
-    rospy.init_node('display_node')
-    display = Display()
-
-    rate = rospy.Rate(100)  # Publishing rate in Hz
-    while not rospy.is_shutdown():
-        display.write()
-        rate.sleep()
+    rospy.init_node('image_display_node')
+    display_image = DisplayImage()
+    display_image.publish_image()

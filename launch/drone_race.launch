@@ -1,8 +1,10 @@
 <?xml version="1.0"?>
 <launch>
 
-  <arg name="track" default="track" />
+  <arg name="track" default="track1" />
   <arg name="use_joy"/>
+
+  <param name="track_config" value="$(arg track)"/>
 
   <!-- Load the robot description parameter -->
   <param name="robot_description" command="$(find xacro)/xacro '$(find hector_quadrotor_description)/urdf/quadrotor.urdf.xacro'" />
@@ -14,9 +16,7 @@
   <node name="drone_motion_node" pkg="drone_race" type="drone_motion.py" output="screen" />
 
   <!-- Start the hoop manager node -->
-  <node name="hoop_manager_node" pkg="drone_race" type="track.py" output="screen">
-    <param name="track_config" value="$(find drone_race)/config/$(arg track).yaml" />
-  </node>
+  <node name="hoop_manager_node" pkg="drone_race" type="track.py" output="screen" />
 
   <!-- Start the robot state publisher -->
   <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
