@@ -28,6 +28,7 @@ class Hoop:
         self.pose = pose
         self.radius = radius
         self.cleared = False # Not yet cleared
+        self.clear_counted = False # Not yet counted as cleared
         self.num_points = 100
         self.hoop_id = hoop_id
         self.marker = self.create_marker()
@@ -64,7 +65,7 @@ class Hoop:
             self.pose.orientation.y,
             self.pose.orientation.z,
             self.pose.orientation.w
-        ]).as_matrix()
+        ]).as_dcm()
 
         # Apply rotation and translation
         point = np.dot(rotation, np.array([x, y, z])) + np.array([
@@ -89,7 +90,7 @@ class Hoop:
             self.pose.orientation.y,
             self.pose.orientation.z,
             self.pose.orientation.w
-        ]).as_matrix()
+        ]).as_dcm()
         
         # Translation vector from the hoop's position
         translation = np.array([
@@ -161,7 +162,11 @@ class HoopManager:
             for hoop in self.hoops:
                 if hoop.cleared:
                     hoop.marker.color = ColorRGBA(0.0, 1.0, 0.0, 0.8)  # Green
+                
+                if not hoop.clear_counted:
                     nCleared += 1
+                    hoop.clear_counted = True
+                    
                 self.marker_publisher.publish(hoop.marker)
             self.hoops_cleared_publisher.publish(int(nCleared))
             rate.sleep()
