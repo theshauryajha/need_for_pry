@@ -193,6 +193,7 @@ class DisplayImage:
                             items.append((f"{player} || {time:.3f}s", {'color': (200, 200, 200)}))
                     
                     self.save_leaderboards()
+                    self.publisher.publish(self.bridge.cv2_to_imgmsg(self.render_display(items), encoding="bgr8"))
                     rospy.loginfo("Game Over")
                     rospy.sleep(3)
                     raise rospy.ROSInterruptException("Game Over")
