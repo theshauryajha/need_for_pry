@@ -9,6 +9,7 @@ import numpy as np
 from datetime import datetime
 import yaml
 from std_msgs.msg import Int32
+import heapq
 
 class DisplayImage:
     def __init__(self):
@@ -19,23 +20,68 @@ class DisplayImage:
         rospack = rospkg.RosPack()
         package_path = rospack.get_path('drone_race')
         track = rospy.get_param('track_config')
-        yaml_file_path = os.path.join(package_path, 'config', track, 'leaderboard.yaml')
+        self.leaderboard_path = os.path.join(package_path, 'config', track, 'leaderboard.yaml')
+        self.all_times_path = os.path.join(package_path, 'config', track, 'all_times.yaml')
 
-        self.load_leaderboard(yaml_file_path)
+        self.load_leaderboards()
         self.start_time = rospy.Time.now()
         self.lap_start_time = None
 
-        self.nHoops = rospy.get_param('num_hoops', None)
+        self.nHoops = rospy.get_param('num_hoops', None)  
         self.nCleared = 0
         self.hoops_cleared_sub = rospy.Subscriber('num_hoops_cleared', Int32, self.hoop_ctr_callback)
         
     def hoop_ctr_callback(self, msg):
         self.nCleared = msg.data
 
-    def load_leaderboard(self, filename):
-        with open(filename, 'r') as file:
-            self.leaderboard = yaml.safe_load(file) or {}
+    def load_leaderboards(self):
+        try:
+            with open(self.leaderboard_path, 'r') as file:
+                self.leaderboard_data = yaml.safe_load(file) or {}
+        except Exception as e:
+            rospy.logerr(f"Error loading leaderboard: {str(e)}")
+            self.leaderboard_data = {}
 
+        try:
+            with open(self.all_times_path, 'r') as file:
+                self.all_times_data = yaml.safe_load(file) or {}
+        except Exception as e:
+            rospy.logerr(f"Error loading all times: {str(e)}")
+            self.all_times_data = {}
+
+        self.update_top_times()
+
+    def update_top_times(self):
+        self.top_times = heapq.nsmallest(5, self.leaderboard_data.values())
+        self.leaderboard = {k: v for k, v in self.leaderboard_data.items() if v in self.top_times}
+
+    def save_leaderboards(self):
+        try:
+            with open(self.leaderboard_path, 'w') as file:
+                yaml.dump(self.leaderboard_data, file)
+        except Exception as e:
+            rospy.logerr(f"Error saving leaderboard: {str(e)}")
+
+        try:
+            with open(self.all_times_path, 'w') as file:
+                yaml.dump(self.all_times_data, file)
+        except Exception as e:
+            rospy.logerr(f"Error saving all times: {str(e)}")
+
+    def update_leaderboard(self, player_name, lap_time):
+        # Update all times
+        if player_name in self.all_times_data:
+            self.all_times_data[player_name].append(lap_time)
+        else:
+            self.all_times_data[player_name] = [lap_time]
+
+        # Update top 5 leaderboard
+        if player_name not in self.leaderboard_data or lap_time < self.leaderboard_data[player_name]:
+            self.leaderboard_data[player_name] = lap_time
+            self.update_top_times()
+
+        self.save_leaderboards()
+    
     def render_display(self, items, image_width=1280, image_height=720):
         image = np.zeros((image_height, image_width, 3), dtype=np.uint8)
 
@@ -55,9 +101,12 @@ class DisplayImage:
             font_sizes.append((text_width, text_height, initial_font_scale))
 
         # Calculate scaling factor
-        width_scale = (image_width * 0.9) / max_width
-        height_scale = (image_height * 0.9) / total_height
-        scale = min(width_scale, height_scale)
+        if max_width > 0 and total_height > 0:
+            width_scale = (image_width * 0.9) / max_width
+            height_scale = (image_height * 0.9) / total_height
+            scale = min(width_scale, height_scale)
+        else:
+            scale = 1  # Default scale if no text to render
 
         y_offset = (image_height - total_height * scale) // 2
 
@@ -102,7 +151,7 @@ class DisplayImage:
                 items.append(("Find your position on the leaderboard!", {'color': (255, 255, 0)}))
                 items.append(("Leaderboard", {'color': (255, 255, 255)}))
                 for player, time in self.leaderboard.items():
-                    items.append((f"{player} || {time}", {'color': (200, 200, 200)}))
+                    items.append((f"{player} || {time:.3f}s", {'color': (200, 200, 200)}))
 
             elif elapsed_time < 4:
                 items.append(("Let's fly!", {'color': (0, 255, 0)}))
@@ -120,10 +169,36 @@ class DisplayImage:
             lap_time = (now - self.lap_start_time).to_sec()
             items.append((f"Lap Time: {lap_time:.3f}", {'color': (0, 255, 0)}))
             
-            if self.nHoops is None:
-                self.nHoops = rospy.get_param('num_hoops', None)
-            items.append((f"Hoops Cleared: {self.nCleared}/{self.nHoops}", {'color': (0, 255, 0)}))
+            if self.nHoops is not None:
+                items.append((f"Hoops Cleared: {self.nCleared}/{self.nHoops}", {'color': (255, 0, 0)}))
+                if self.nCleared == self.nHoops:
+                    # Display leaderboard
+                    items.clear()
+                    items.append(("Congratulations! You have completed the track!", {'color': (0, 255, 0)}))
+                    
+                    # Update leaderboard
+                    player_name = rospy.get_param('player_name', 'Player')
+                    self.update_leaderboard(player_name, lap_time)
+                    
+                    if player_name in self.leaderboard:
+                        items.append(("You made it to the leaderboard!", {'color': (0, 255, 0)}))
+                    else:
+                        items.append(("You did not make it to the leaderboard!", {'color': (255, 0, 0)}))
+                        items.append((f"Top time: {min(self.top_times):.3f}s", {'color': (255, 0, 0)}))
 
+                    # Display leaderboard 
+                    items.append(("Leaderboard", {'color': (255, 255, 255)}))
+                    for player, time in self.leaderboard.items():
+                        if player == player_name:
+                            items.append((f"{player} || {time:.3f}s", {'color': (0, 255, 0)}))
+                        else:
+                            items.append((f"{player} || {time:.3f}s", {'color': (200, 200, 200)}))
+                    
+                    rospy.sleep(5)
+                    raise rospy.ROSInterruptException("Game Over")
+            else:
+                self.nHoops = rospy.get_param('num_hoops', None)
+                
         return self.render_display(items)
 
     def publish_image(self):
