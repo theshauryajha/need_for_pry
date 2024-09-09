@@ -185,7 +185,7 @@ Window Geometry:
   Displays:
     collapsed: false
   Height: 1016
-  Hide Left Dock: false
+  Hide Left Dock: true
   Hide Right Dock: true
   Image:
     collapsed: false
