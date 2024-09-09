@@ -3,14 +3,10 @@
 # Default values
 USE_JOY=true
 
-# Parse command-line arguments
-while [[ "$#" -gt 0 ]]; do
-    case $1 in
-        --keyboard) USE_JOY=false ;;
-        *) echo "Unknown parameter passed: $1"; exit 1 ;;
-    esac
-    shift
-done
+PLAYER_NAME=${1:-"Ghost"}
+if [ "$2" == "--keyboard" ]; then
+    USE_JOY=false
+fi
 
 # Start a new tmux session named 'drone_race' and detach
 tmux new-session -s drone_race -d || { echo "Failed to start tmux session"; exit 1; }
@@ -18,7 +14,7 @@ tmux new-session -s drone_race -d || { echo "Failed to start tmux session"; exit
 # Create and configure the first window for roslaunch
 tmux rename-window -t drone_race:0 'roslaunch' || { echo "Failed to rename tmux window"; exit 1; }
 tmux send-keys -t drone_race:0 'source ~/hector_quadrotor_ws/devel/setup.bash' C-m 
-tmux send-keys -t drone_race:0 "roslaunch drone_race drone_race.launch use_joy:=${USE_JOY}" C-m || { echo "Failed to send command to tmux window"; exit 1; }
+tmux send-keys -t drone_race:0 "roslaunch drone_race drone_race.launch use_joy:=${USE_JOY} player:=${PLAYER_NAME}" C-m || { echo "Failed to send command to tmux window"; exit 1; }
 
 # Create and configure the second window with teleop_twist_keyboard if required
 if [ "$USE_JOY" = false ]; then

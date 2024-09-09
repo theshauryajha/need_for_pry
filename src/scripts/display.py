@@ -177,7 +177,7 @@ class DisplayImage:
                     items.append(("Congratulations! You have completed the track!", {'color': (0, 255, 0)}))
                     
                     # Update leaderboard
-                    player_name = rospy.get_param('player_name', 'Player')
+                    player_name = rospy.get_param('player_name', 'Ghost')
                     self.update_leaderboard(player_name, lap_time)
                     
                     if player_name in self.leaderboard:
