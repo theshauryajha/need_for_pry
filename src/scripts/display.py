@@ -135,6 +135,17 @@ class DisplayImage:
 
         return image
 
+    def render_leaderboard(self, leaderboard, player_name='z8G3bV9uQeL2S7aVbI0hAq9eL3yFoK8TnD2mBpU6gHrJxQw'):
+        # Sort the leaderboard items by time
+        sorted_leaderboard = sorted(leaderboard.items(), key=lambda x: x[1])
+        items = []
+        for player, time in sorted_leaderboard:
+            if player == player_name:
+                items.append((f"{player} || {time:.3f}s", {'color': (0, 255, 0)}))
+            else:
+                items.append((f"{player} || {time:.3f}s", {'color': (200, 200, 200)}))
+        return items
+    
     def create_image(self):
         now = rospy.Time.now()
         elapsed_time = (now - self.start_time).to_sec()
@@ -148,8 +159,7 @@ class DisplayImage:
             elif elapsed_time < 3:
                 items.append(("Find your position on the leaderboard!", {'color': (255, 255, 0)}))
                 items.append(("Leaderboard", {'color': (255, 255, 255)}))
-                for player, time in self.leaderboard.items():
-                    items.append((f"{player} || {time:.3f}s", {'color': (200, 200, 200)}))
+                items.extend(self.render_leaderboard(self.leaderboard))
 
             elif elapsed_time < 4:
                 items.append(("Let's fly!", {'color': (0, 255, 0)}))
@@ -186,11 +196,7 @@ class DisplayImage:
 
                     # Display leaderboard 
                     items.append(("Leaderboard", {'color': (255, 255, 255)}))
-                    for player, time in self.leaderboard.items():
-                        if player == player_name:
-                            items.append((f"{player} || {time:.3f}s", {'color': (0, 255, 0)}))
-                        else:
-                            items.append((f"{player} || {time:.3f}s", {'color': (200, 200, 200)}))
+                    items.extend(self.render_leaderboard(self.leaderboard, player_name))
                     
                     self.save_leaderboards()
                     self.publisher.publish(self.bridge.cv2_to_imgmsg(self.render_display(items), encoding="bgr8"))
