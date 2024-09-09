@@ -87,23 +87,24 @@ class DisplayImage:
         items = []
 
         if elapsed_time < 9:
-            if elapsed_time < 1.5:
+            if elapsed_time < 1:
                 items.append(("Welcome to the drone race game!", {'color': (0, 255, 255)}))
-            elif elapsed_time < 2.5:
-                items.append(("Find your position on the leaderboard!", {'color': (255, 255, 0)}))
+            
             elif elapsed_time < 3:
+                items.append(("Find your position on the leaderboard!", {'color': (255, 255, 0)}))
+                items.append(("Leaderboard", {'color': (255, 255, 255)}))
+                for player, time in self.leaderboard.items():
+                    items.append((f"{player} || {time}", {'color': (200, 200, 200)}))
+
+            elif elapsed_time < 4:
                 items.append(("Let's fly!", {'color': (0, 255, 0)}))
+            
             else:
                 countdown = 9 - int(elapsed_time)
                 if countdown > 0:
                     items.append((str(countdown), {'color': (255, 0, 0)}))
                 else:
                     items.append(("!! GO !!", {'color': (0, 255, 0)}))
-
-        if elapsed_time >= 2.5:
-            items.append(("Leaderboard", {'color': (255, 255, 255)}))
-            for player, time in self.leaderboard.items():
-                items.append((f"{player} || {time}", {'color': (200, 200, 200)}))
 
         if elapsed_time >= 9:
             if self.lap_start_time is None:
